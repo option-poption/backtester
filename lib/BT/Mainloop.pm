@@ -3,7 +3,7 @@ package BT::Mainloop;
 use Mojo::Base -base;
 
 use Data::Dump qw/pp/;
-use DateTime;
+use Date::Simple;
 
 use BT::DB;
 use BT::Trade;
@@ -13,15 +13,9 @@ has db => sub { BT::DB->new };
 
 has [qw/params preset symbol/];
 
-has start_date => sub {
-    DateTime->new(
-        year  => 2013,
-        month => 1,
-        day   => 1,
-    );
-};
+has start_date => sub { Date::Simple->new('2013-01-01') };
 
-has end_date => sub { DateTime->today };
+has end_date => sub { Date::Simple->today };
 
 has today       => sub { $_[0]->start_date };
 has balance     => sub { $_[0]->params->{account} };
@@ -37,11 +31,11 @@ sub run {
 
     my $dates = $self->db->valid_dates($self->symbol->id);
 
+    $self->today->default_format('%Y-%m-%d');
+
     while ($self->today <= $self->end_date) {
         # check for valid day
-        next unless $dates->{$self->today->ymd('-')};
-
-        print $self->today->dmy('.') . "\n";
+        next unless $dates->{$self->today->format};
 
         foreach my $trade (@{$self->open}) {
             $self->update($trade);
@@ -58,7 +52,7 @@ sub run {
         }
     }
     continue {
-        $self->today($self->today->add(days => 1));
+        $self->today($self->today->next);
     }
 }
 
@@ -132,8 +126,6 @@ sub update {
         ) unless $self->stress_test;
 
         $trade->exit_balance($self->balance);
-
-pp $trade;
 
         push @{$self->trades}, $trade;
         return 1;

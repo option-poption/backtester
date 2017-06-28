@@ -79,7 +79,7 @@ sub expiration {
         type  => 'date',
     );
 
-    my $date = $at->clone->add(days => $days);
+    my $date = $at + $days;
     my $sql  = 'SELECT DISTINCT(expiration) FROM options
         WHERE symbol_id=? AND at=? ' . $where;
     my ($expiration) = $self->dbh->selectrow_array(
@@ -87,7 +87,7 @@ sub expiration {
         {},
         $symbol_id,
         $at,
-        $date->ymd('-'),
+        $date->format,
     );
 
     return $expiration;

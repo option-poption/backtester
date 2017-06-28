@@ -2,7 +2,7 @@ package BT::Option;
 
 use Mojo::Base -base;
 
-use DateTime::Format::MySQL;
+use Date::Simple;
 
 
 has [qw/symbol_id at expiration call_put strike settlement_price delta span_delta implied_volatility futures_contract_month/];
@@ -20,10 +20,10 @@ sub values {
 sub dte {
     my ($self) = @_;
 
-    my $today      = DateTime::Format::MySQL->parse_date($self->at);
-    my $expiration = DateTime::Format::MySQL->parse_date($self->expiration);
+    my $at         = Date::Simple->new($self->at);
+    my $expiration = Date::Simple->new($self->expiration);
 
-    return $expiration->delta_days($today)->delta_days;
+    return $expiration - $at;
 }
 
 1;
