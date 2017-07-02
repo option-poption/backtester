@@ -56,6 +56,27 @@ sub run {
     }
 }
 
+sub stats {
+    my ($self) = @_;
+
+    my @stats = (
+        BT::Stat::DTE->new,
+        BT::Stat::DIT->new,
+    );
+
+    foreach my $trade (@{$self->trades}) {
+        foreach my $stat (@stats) {
+            $stat->add($trade);
+        }
+    }
+
+    foreach my $stat (@stats) {
+        $stat->finish;
+    }
+
+    return @stats;
+}
+
 sub entry {
     my ($self) = @_;
 

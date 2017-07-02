@@ -9,6 +9,7 @@ use lib 'lib';
 use BT::Mainloop;
 use BT::Symbol;
 useall 'BT::Preset';
+useall 'BT::Stat';
 
 
 my $symbol = BT::Symbol->new(
@@ -35,3 +36,15 @@ my $bt = BT::Mainloop->new(
 
 $bt->run;
 pp $bt->trades->[-1]->exit_balance;
+
+my @stats = $bt->stats;
+foreach my $stat (@stats) {
+    printf(
+        "%s: min=%d, max=%d, avg=%d, med=%d\n",
+        $stat->name,
+        $stat->min,
+        $stat->max,
+        $stat->avg,
+        $stat->median,
+    );
+}
