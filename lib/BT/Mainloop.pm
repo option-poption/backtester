@@ -4,10 +4,13 @@ use Mojo::Base -base;
 
 use Data::Dump qw/pp/;
 use Date::Simple;
+use Module::Find qw/useall/;
 
 use BT::DB;
 use BT::Props;
+use BT::Stats;
 use BT::Trade;
+useall 'BT::Stat';
 
 
 has db => sub { BT::DB->new };
@@ -60,25 +63,42 @@ sub run {
 sub stats {
     my ($self) = @_;
 
-    my @stats = (
-        BT::Stat::DTE->new,
-        BT::Stat::DIT->new,
-    );
+    my %data = ();
 
     foreach my $trade (@{$self->trades}) {
-        foreach my $stat (@stats) {
-            $stat->add($trade);
+        while (my ($key, $stat) = each %{BT::Stats->stats}) {
+            push @{$data{$key}}, $stat->{calc}->($trade); 
         }
         while (my ($key, $prop) = each %{BT::Props->props}) {
             $trade->properties->{$key} = $prop->{calc}->($trade);
         }
     }
 
-    foreach my $stat (@stats) {
-        $stat->finish;
+    my %stat = ();
+    while (my ($key, $stat) = each %{BT::Stats->stats}) {
+        my @data  = sort { $a <=> $b } @{$data{$key}};
+        my $count = scalar @data;
+        my $sum   = 0;
+        $sum += $_ foreach (@data);
+
+        $stat{$key} = {
+            label => $stat->{label},
+            min   => $data[0],
+            max   => $data[-1],
+            avg   => $sum / $count,
+            count => $count,
+        };
+
+        # median - https://stackoverflow.com/questions/11955728/how-to-calculate-the-median-of-an-array
+        my $middle = int($count / 2);
+        if ($count % 2) {
+            $stat{$key}{median} = $data[$middle];
+        } else {
+            $stat{$key}{median} = ($data[$middle] + $data[$middle - 1]) / 2;
+        }
     }
 
-    return @stats;
+    return \%stat;
 }
 
 sub entry {
@@ -100,7 +120,9 @@ sub entry {
     );
 
     my $underlying = $self->db->underlying(
-        $position, $self->today,
+        symbol_id => $self->symbol->id,
+        position  => $position,
+        at        => $self->today,
     );
 
     my $amount  = $position->price * $self->symbol->factor;
@@ -144,7 +166,11 @@ sub update {
     $trade->max_margin($margin) if $margin > $trade->max_margin;
 
     # update min/max underlying
-    my $underlying = $self->db->underlying($position, $self->today);
+    my $underlying = $self->db->underlying(
+        symbol_id => $position->symbol->id,
+        position  => $position,
+        at        => $self->today,
+    );
     $trade->min_underlying($underlying) if $underlying < $trade->min_underlying;
     $trade->max_underlying($underlying) if $underlying > $trade->max_underlying;
 

@@ -9,23 +9,47 @@ use lib 'lib';
 use BT::Mainloop;
 use BT::Symbol;
 useall 'BT::Preset';
-useall 'BT::Stat';
+
+
+my %CONFIG = (
+    sp3 => [
+        'ShortPut::Delta',
+        {
+            dte           => '90+',
+            delta         => '3+',
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
+    sp80 => [
+        'ShortPut::Percent',
+        {
+            dte           => '90+',
+            percent       => 80,
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
+    falde => [
+        'Falde604020',
+        {
+            dte           => '60+',
+            delta_percent => 30,
+            round_turn    => 1.23,
+        },
+    ],
+);
+
+my $config = $CONFIG{$ARGV[0] || 'sp3'};
+my $class  = 'BT::Preset::' . $config->[0];
+my $params = $config->[1];
 
 
 my $symbol = BT::Symbol->new(
     id => 1,
 );
 
-my $params = {
-    dte           => '90+',
-    delta         => '3+',
-    profit_target => 50,
-    multiple      => 25,
-};
-
-my $preset = BT::Preset::ShortPut::Delta->new(
-    params => $params,
-);
+my $preset = $class->new(params => $params);
 
 my $bt = BT::Mainloop->new(
     symbol => $symbol,
@@ -36,15 +60,6 @@ my $bt = BT::Mainloop->new(
 $bt->run;
 pp $bt->trades->[-1]->exit_balance;
 
-my @stats = $bt->stats;
-foreach my $stat (@stats) {
-    printf(
-        "%s: min=%d, max=%d, avg=%d, med=%d\n",
-        $stat->name,
-        $stat->min,
-        $stat->max,
-        $stat->avg,
-        $stat->median,
-    );
-}
+my $stats = $bt->stats;
+pp $stats;
 pp $bt->trades->[-1]->properties;

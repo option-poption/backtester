@@ -28,13 +28,33 @@ sub valid_dates {
 }
 
 sub underlying {
-    my ($self, $position, $today) = @_;
+    my ($self, %arg) = @_;
 
-    my $option = $position->first_option;
+    my $symbol_id  = $arg{symbol_id} or die 'SYMBOL_ID missing';
+    my $at         = $arg{at}        or die 'AT missing';
+    my $position   = $arg{position};
+    my $expiration = $arg{expiration};
+
+    if (!$position && !$expiration) {
+        die 'POSITION or EXPIRATION missing';
+    }
+
+    my $month;
+    if ($position) {
+        $month = $position->first_option->futures_contract_month;
+    } else {
+        # get any option (for futures contract month)
+        ($month) = $self->dbh->selectrow_array(
+            'SELECT futures_contract_month FROM options WHERE symbol_id = ? AND at = ? AND call_put = ? AND expiration = ? AND settlement_price > 0 LIMIT 1',
+            {},
+            $symbol_id, $at, 'P', $expiration,
+        );
+    }
+
     my ($price) = $self->dbh->selectrow_array(
         'SELECT settlement_price FROM futures WHERE symbol_id=? AND at=? AND contract_month=?',
         {},
-        $option->symbol_id, $today, $option->futures_contract_month,
+        $symbol_id, $at, $month,
     );
 
     return $price || 0;
@@ -120,6 +140,45 @@ sub delta_option {
     );
     unless ($row) {
         warn "Skipping (delta_option): at=$at, exp=$expiration";
+        return;
+    }
+
+    return BT::Option->new($row);
+}
+
+sub percent_option {
+    my ($self, %arg) = @_;
+
+    my $symbol_id  = $arg{symbol_id}  or die 'SYMBOL_ID missing';
+    my $at         = $arg{at}         or die 'AT missing';
+    my $expiration = $arg{expiration} or die 'EXPIRATION missing';
+    my $percent    = $arg{percent}    or die 'PERCENT missing';
+
+    my $underlying = $self->underlying(
+        symbol_id  => $symbol_id,
+        expiration => $expiration,
+        at         => $at,
+    );
+    unless ($underlying) {
+        warn "Skipping (percent_option): at=$at, exp=$expiration - no underlying";
+        return;
+    }
+
+    my $strike = ($underlying / 100) * ($percent / 100);
+
+    my $sql = "SELECT * FROM options WHERE
+    symbol_id  = ? AND
+    at         = ? AND
+    call_put   = 'P' AND
+    expiration = ? AND
+    settlement_price > 0
+    ORDER BY ABS(strike - ?) ASC LIMIT 1";
+
+    my $row = $self->dbh->selectrow_hashref(
+        $sql, {}, $symbol_id, $at, $expiration, $strike,
+    );
+    unless ($row) {
+        warn "Skipping (nearest_option): at=$at, exp=$expiration, strike=$strike";
         return;
     }
 

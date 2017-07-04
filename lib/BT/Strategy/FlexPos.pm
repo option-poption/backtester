@@ -6,7 +6,6 @@ use Data::Dump qw/pp/;
 
 use BT::Position;
 
-has 'dbh';
 has 'symbol';
 has 'description';
 
