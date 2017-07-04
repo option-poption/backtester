@@ -2,12 +2,8 @@ package BT::Stat::DTE;
 
 use Mojo::Base 'BT::Stat';
 
-sub name { 'DTE' }
-
-sub calc {
-    my ($self, $trade) = @_;
-
-    return $trade->entry_position->first_option->dte;
-}
+sub name  { 'dte' }
+sub label { 'DTE' }
+sub calc  { $_[1]->dte }
 
 1;

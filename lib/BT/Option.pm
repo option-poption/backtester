@@ -26,4 +26,8 @@ sub dte {
     return $expiration - $at;
 }
 
+sub format_strike { sprintf('%.0f', shift->strike) }
+sub format_delta  { sprintf('%.2f', shift->span_delta * 100) }
+sub format_iv     { sprintf('%.1f', shift->implied_volatility * 100) }
+
 1;

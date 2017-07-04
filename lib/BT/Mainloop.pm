@@ -6,6 +6,7 @@ use Data::Dump qw/pp/;
 use Date::Simple;
 
 use BT::DB;
+use BT::Props;
 use BT::Trade;
 
 
@@ -68,6 +69,9 @@ sub stats {
         foreach my $stat (@stats) {
             $stat->add($trade);
         }
+        while (my ($key, $prop) = each %{BT::Props->props}) {
+            $trade->properties->{$key} = $prop->{calc}->($trade);
+        }
     }
 
     foreach my $stat (@stats) {
@@ -129,9 +133,20 @@ sub update {
 
     # $self->_update_equity(...);
 
-    my $underlying = $self->db->underlying(
-        $position, $self->today,
-    );
+    # update min/max price
+    my $price = $position->price;
+    $trade->min_price($price) if $price < $trade->min_price;
+    $trade->max_price($price) if $price > $trade->max_price;
+
+    # update min/max margin
+    my $margin = $position->margin;
+    $trade->min_margin($margin) if $margin < $trade->min_margin;
+    $trade->max_margin($margin) if $margin > $trade->max_margin;
+
+    # update min/max underlying
+    my $underlying = $self->db->underlying($position, $self->today);
+    $trade->min_underlying($underlying) if $underlying < $trade->min_underlying;
+    $trade->max_underlying($underlying) if $underlying > $trade->max_underlying;
 
     my $action = $self->preset->check_position(
         db         => $self->db,

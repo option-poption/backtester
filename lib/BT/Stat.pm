@@ -2,8 +2,6 @@ package BT::Stat;
 
 use Mojo::Base -base;
 
-use List::Util ();
-
 
 has data => sub { [] };
 has [qw/min max avg median count/];
@@ -20,10 +18,12 @@ sub finish {
 
     my @data  = sort { $a <=> $b } @{$self->data};
     my $count = scalar @data;
+    my $sum   = 0;
+    $sum += $_ foreach (@data);
 
     $self->min($data[0]);
     $self->max($data[-1]);
-    $self->avg(List::Util::sum(@data)/$count);
+    $self->avg($sum/$count);
     $self->count($count);
 
     # median - https://stackoverflow.com/questions/11955728/how-to-calculate-the-median-of-an-array

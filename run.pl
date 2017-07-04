@@ -13,8 +13,7 @@ useall 'BT::Stat';
 
 
 my $symbol = BT::Symbol->new(
-    id     => 1,
-    factor => 50,
+    id => 1,
 );
 
 my $params = {
@@ -48,3 +47,4 @@ foreach my $stat (@stats) {
         $stat->median,
     );
 }
+pp $bt->trades->[-1]->properties;

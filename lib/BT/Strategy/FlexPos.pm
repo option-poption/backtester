@@ -79,7 +79,7 @@ sub check_position {
     my $trade      = $arg{trade}      or die 'TRADE missing';
     my $position   = $arg{position}   or die 'POSITION missing';
     my $underlying = $arg{underlying} or die 'UNDERLYING missing';
-    
+
     # check profit target
     my $entry  = $trade->entry_position->price;
     my $profit = $position->price - $entry;
@@ -88,6 +88,7 @@ sub check_position {
     my $target  = (-$entry) * $percent;
 
     if ($profit >= $target) {
+        $trade->exit_reason('TAKE_PROFIT');
         $trade->exit_position($position);
         $trade->exit_underlying($underlying);
 
