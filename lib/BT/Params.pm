@@ -34,6 +34,16 @@ sub Percent {
     };
 }
 
+sub Width {
+    return {
+        name        => 'width',
+        label       => 'Width',
+        default     => shift || 100,
+        type        => 'float',
+        description => 'Strike Distance',
+    };
+}
+
 # target
 
 sub ProfitTarget {

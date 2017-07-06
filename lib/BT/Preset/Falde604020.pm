@@ -9,7 +9,7 @@ sub meta {
         description => 'Andrew Falde\'s 60/40/20 BWB',
         strategy    => 'Falde604020',
         target      => 'Falde604020',
-        sizing      => 'SingleLot',
+        sizing      => 'RegT::BWB',
         params      => [
             BT::Params::DTE('60+'),
             {

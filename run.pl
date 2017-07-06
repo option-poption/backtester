@@ -30,6 +30,16 @@ my %CONFIG = (
             multiple      => 25,
         },
     ],
+    cs80 => [
+        'CreditSpread::Percent',
+        {
+            dte           => '90+',
+            percent       => 80,
+            width         => 100,
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
     falde => [
         'Falde604020',
         {
@@ -60,6 +70,16 @@ my $bt = BT::Mainloop->new(
 $bt->run;
 pp $bt->trades->[-1]->exit_balance;
 
-my $stats = $bt->stats;
-pp $stats;
-pp $bt->trades->[-1]->properties;
+pp $bt->stats;
+
+pp $bt->exit_reasons;
+
+if ($ARGV[1]) {
+    foreach my $trade (@{$bt->trades}) {
+        my $props = $trade->properties;
+        $props->{entry_date}      .= '';
+        $props->{exit_date}       .= '';
+        $props->{expiration_date} .= '';
+        pp $props;
+    }
+}

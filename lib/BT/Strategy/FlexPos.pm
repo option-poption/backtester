@@ -21,11 +21,14 @@ sub entry {
 
     my $position = BT::Position->new(symbol => $symbol);
 
+    my $option;
     for (my $i = 0; $i < @{$self->ratio}; $i++) {
         my $ratio   = $self->ratio->[$i];
         my $dte     = $self->dte->[$i];
         my $delta   = $self->delta->[$i];
         my $percent = $self->percent->[$i];
+        my $width   = 0;
+        $width = $self->width->[$i - 1] if $i > 0;
 
         my $expiration = $db->expiration(
             symbol_id => $symbol->id,
@@ -37,7 +40,6 @@ sub entry {
             return;
         }
 
-        my $option;
         if ($percent) {
             $option = $db->percent_option(
                 symbol_id  => $symbol->id,
@@ -58,6 +60,18 @@ sub entry {
             );
             unless ($option) {
                 warn "Could not get option for DELTA '$delta'";
+                return;
+            }
+        } elsif ($width) {
+            my $strike = $option->strike + $width;
+            $option = $db->strike_option(
+                symbol_id  => $symbol->id,
+                at         => $at,
+                expiration => $expiration,
+                strike     => $strike,
+            );
+            unless ($option) {
+                warn "Could not get option for STRIKE '$strike'";
                 return;
             }
         } else {

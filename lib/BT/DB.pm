@@ -166,6 +166,22 @@ sub percent_option {
 
     my $strike = ($underlying / 100) * ($percent / 100);
 
+    return $self->strike_option(
+        symbol_id  => $symbol_id,
+        at         => $at,
+        expiration => $expiration,
+        strike     => $strike,
+    );
+}
+
+sub strike_option {
+    my ($self, %arg) = @_;
+
+    my $symbol_id  = $arg{symbol_id}  or die 'SYMBOL_ID missing';
+    my $at         = $arg{at}         or die 'AT missing';
+    my $expiration = $arg{expiration} or die 'EXPIRATION missing';
+    my $strike     = $arg{strike}     or die 'STRIKE missing';
+
     my $sql = "SELECT * FROM options WHERE
     symbol_id  = ? AND
     at         = ? AND
@@ -178,7 +194,7 @@ sub percent_option {
         $sql, {}, $symbol_id, $at, $expiration, $strike,
     );
     unless ($row) {
-        warn "Skipping (nearest_option): at=$at, exp=$expiration, strike=$strike";
+        warn "Skipping (strike_option): at=$at, exp=$expiration, strike=$strike";
         return;
     }
 

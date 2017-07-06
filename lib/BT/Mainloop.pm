@@ -67,7 +67,7 @@ sub stats {
 
     foreach my $trade (@{$self->trades}) {
         while (my ($key, $stat) = each %{BT::Stats->stats}) {
-            push @{$data{$key}}, $stat->{calc}->($trade); 
+            push @{$data{$key}}, $stat->{calc}->($trade);
         }
         while (my ($key, $prop) = each %{BT::Props->props}) {
             $trade->properties->{$key} = $prop->{calc}->($trade);
@@ -76,7 +76,13 @@ sub stats {
 
     my %stat = ();
     while (my ($key, $stat) = each %{BT::Stats->stats}) {
-        my @data  = sort { $a <=> $b } @{$data{$key}};
+        my @data = @{$data{$key}};
+        if ($stat->{finish}) {
+            @data = $stat->{finish}->(@data);
+        }
+
+        @data = sort { $a <=> $b } @data;
+
         my $count = scalar @data;
         my $sum   = 0;
         $sum += $_ foreach (@data);
@@ -101,6 +107,18 @@ sub stats {
     return \%stat;
 }
 
+sub exit_reasons {
+    my ($self) = @_;
+
+    my %reason = ();
+
+    foreach my $trade (@{$self->trades}) {
+        $reason{$trade->exit_reason}++;
+    }
+
+    return \%reason;
+}
+
 sub entry {
     my ($self) = @_;
 
@@ -114,6 +132,7 @@ sub entry {
     my $margin = $position->initial_margin;
 
     my $size = $self->preset->size(
+        symbol   => $self->symbol,
         balance  => $self->balance,
         position => $position,
         margin   => $margin,
