@@ -13,7 +13,11 @@ use BT::Trade;
 useall 'BT::Stat';
 
 
-has db => sub { BT::DB->new };
+has db => sub {
+    BT::DB->new(
+        symbol => shift->symbol,
+    );
+};
 
 has [qw/params preset symbol/];
 
@@ -33,7 +37,7 @@ has equity   => sub { {} };
 sub run {
     my ($self) = @_;
 
-    my $dates = $self->db->valid_dates($self->symbol->id);
+    my $dates = $self->db->valid_dates;
 
     $self->today->default_format('%Y-%m-%d');
 
@@ -141,12 +145,11 @@ sub entry {
     );
 
     my $underlying = $self->db->underlying(
-        symbol_id => $self->symbol->id,
         position  => $position,
         at        => $self->today,
     );
 
-    my $amount  = $position->price * $self->symbol->factor;
+    my $amount  = $position->price * $self->symbol->multiplier;
     my $fees    = $self->round_turn * $position->contracts;
     my $balance = $self->balance + $size * ($amount - $fees);
 
@@ -188,15 +191,15 @@ sub update {
 
     # update min/max underlying
     my $underlying = $self->db->underlying(
-        symbol_id => $position->symbol->id,
-        position  => $position,
-        at        => $self->today,
+        position => $position,
+        at       => $self->today,
     );
     $trade->min_underlying($underlying) if $underlying < $trade->min_underlying;
     $trade->max_underlying($underlying) if $underlying > $trade->max_underlying;
 
     my $action = $self->preset->check_position(
         db         => $self->db,
+        symbol     => $self->symbol,
         preset     => $self->preset,
         trade      => $trade,
         position   => $position,

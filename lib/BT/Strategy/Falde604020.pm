@@ -4,8 +4,6 @@ use Mojo::Base 'BT::Strategy';
 
 use BT::Position;
 
-has 'symbol';
-
 has [qw/dte delta_percent/];
 
 sub entry {
@@ -16,9 +14,8 @@ sub entry {
     my $symbol = $arg{symbol} or die 'SYMBOL missing';
 
     my $expiration = $db->expiration(
-        symbol_id => $symbol->id,
-        at        => $at,
-        dte       => $self->dte,
+        at  => $at,
+        dte => $self->dte,
     );
     return unless $expiration;
 
@@ -28,7 +25,6 @@ sub entry {
     my @puts = ();
     foreach my $delta (@delta) {
         my $option = $db->delta_option(
-            symbol_id  => $symbol->id,
             at         => $at,
             expiration => $expiration,
             delta      => $delta,

@@ -50,7 +50,7 @@ sub price {
         $price += $leg->[0] * $leg->[1]->settlement_price;
     }
 
-    return $price;
+    return $price / $self->symbol->divider;
 }
 
 

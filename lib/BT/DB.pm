@@ -7,6 +7,8 @@ use DBI;
 use BT::Option;
 
 
+has 'symbol';
+
 has dbh => sub {
     DBI->connect(
         'dbi:mysql:span:mysql',
@@ -17,21 +19,20 @@ has dbh => sub {
 };
 
 sub valid_dates {
-    my ($self, $symbol_id) = @_;
+    my ($self) = @_;
 
     return $self->dbh->selectall_hashref(
         'SELECT * FROM dates WHERE symbol_id=?',
         'at',
         {},
-        $symbol_id,
+        $self->symbol->id,
     );
 }
 
 sub underlying {
     my ($self, %arg) = @_;
 
-    my $symbol_id  = $arg{symbol_id} or die 'SYMBOL_ID missing';
-    my $at         = $arg{at}        or die 'AT missing';
+    my $at         = $arg{at} or die 'AT missing';
     my $position   = $arg{position};
     my $expiration = $arg{expiration};
 
@@ -47,17 +48,18 @@ sub underlying {
         ($month) = $self->dbh->selectrow_array(
             'SELECT futures_contract_month FROM options WHERE symbol_id = ? AND at = ? AND call_put = ? AND expiration = ? AND settlement_price > 0 LIMIT 1',
             {},
-            $symbol_id, $at, 'P', $expiration,
+            $self->symbol->id, $at, 'P', $expiration,
         );
     }
 
     my ($price) = $self->dbh->selectrow_array(
         'SELECT settlement_price FROM futures WHERE symbol_id=? AND at=? AND contract_month=?',
         {},
-        $symbol_id, $at, $month,
+        $self->symbol->id, $at, $month,
     );
+    $price ||= 0;
 
-    return $price || 0;
+    return $price / $self->symbol->divider;
 }
 
 sub option {
@@ -89,9 +91,8 @@ sub option {
 sub expiration {
     my ($self, %arg) = @_;
 
-    my $symbol_id = $arg{symbol_id} or die 'SYMBOL_ID missing';
-    my $at        = $arg{at}        or die 'AT missing';
-    my $dte       = $arg{dte}       or die 'DTE missing';
+    my $at  = $arg{at}  or die 'AT missing';
+    my $dte = $arg{dte} or die 'DTE missing';
 
     my ($days, $where) = $self->_range(
         range => $dte,
@@ -105,7 +106,7 @@ sub expiration {
     my ($expiration) = $self->dbh->selectrow_array(
         $sql,
         {},
-        $symbol_id,
+        $self->symbol->id,
         $at,
         $date->format,
     );
@@ -116,7 +117,6 @@ sub expiration {
 sub delta_option {
     my ($self, %arg) = @_;
 
-    my $symbol_id  = $arg{symbol_id}  or die 'SYMBOL_ID missing';
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $delta      = $arg{delta}      or die 'DELTA missing';
@@ -136,7 +136,12 @@ sub delta_option {
     settlement_price > 0 $where";
 
     my $row = $self->dbh->selectrow_hashref(
-        $sql, {}, $symbol_id, $at, $expiration, $value / 100,
+        $sql,
+        {},
+        $self->symbol->id,
+        $at,
+        $expiration,
+        $value / 100,
     );
     unless ($row) {
         warn "Skipping (delta_option): at=$at, exp=$expiration";
@@ -149,13 +154,11 @@ sub delta_option {
 sub percent_option {
     my ($self, %arg) = @_;
 
-    my $symbol_id  = $arg{symbol_id}  or die 'SYMBOL_ID missing';
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $percent    = $arg{percent}    or die 'PERCENT missing';
 
     my $underlying = $self->underlying(
-        symbol_id  => $symbol_id,
         expiration => $expiration,
         at         => $at,
     );
@@ -164,10 +167,9 @@ sub percent_option {
         return;
     }
 
-    my $strike = ($underlying / 100) * ($percent / 100);
+    my $strike = $underlying * ($percent / 100);
 
     return $self->strike_option(
-        symbol_id  => $symbol_id,
         at         => $at,
         expiration => $expiration,
         strike     => $strike,
@@ -177,7 +179,6 @@ sub percent_option {
 sub strike_option {
     my ($self, %arg) = @_;
 
-    my $symbol_id  = $arg{symbol_id}  or die 'SYMBOL_ID missing';
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $strike     = $arg{strike}     or die 'STRIKE missing';
@@ -191,7 +192,12 @@ sub strike_option {
     ORDER BY ABS(strike - ?) ASC LIMIT 1";
 
     my $row = $self->dbh->selectrow_hashref(
-        $sql, {}, $symbol_id, $at, $expiration, $strike,
+        $sql,
+        {},
+        $self->symbol->id,
+        $at,
+        $expiration,
+        $strike,
     );
     unless ($row) {
         warn "Skipping (strike_option): at=$at, exp=$expiration, strike=$strike";

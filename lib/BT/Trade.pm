@@ -36,7 +36,7 @@ has profit => sub {
 
     # TODO adjustments
 
-    my $profit = ($self->exit_position->price - $self->entry_position->price) * $self->symbol->factor;
+    my $profit = ($self->exit_position->price - $self->entry_position->price) * $self->symbol->multiplier;
     my $fees   = $self->entry_position->contracts * $self->round_turn;
 
     return $profit - $fees;

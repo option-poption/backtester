@@ -6,7 +6,6 @@ use Data::Dump qw/pp/;
 
 use BT::Position;
 
-has 'symbol';
 has 'description';
 
 has [qw/ratio dte delta percent width/] => sub { [] };
@@ -31,7 +30,6 @@ sub entry {
         $width = $self->width->[$i - 1] if $i > 0;
 
         my $expiration = $db->expiration(
-            symbol_id => $symbol->id,
             at        => $at,
             dte       => $dte,
         );
@@ -42,7 +40,6 @@ sub entry {
 
         if ($percent) {
             $option = $db->percent_option(
-                symbol_id  => $symbol->id,
                 at         => $at,
                 expiration => $expiration,
                 percent    => $percent,
@@ -53,7 +50,6 @@ sub entry {
             }
         } elsif ($delta) {
             $option = $db->delta_option(
-                symbol_id  => $symbol->id,
                 at         => $at,
                 expiration => $expiration,
                 delta      => $delta,
@@ -65,7 +61,6 @@ sub entry {
         } elsif ($width) {
             my $strike = $option->strike + $width;
             $option = $db->strike_option(
-                symbol_id  => $symbol->id,
                 at         => $at,
                 expiration => $expiration,
                 strike     => $strike,
@@ -88,6 +83,7 @@ sub check_position {
     my ($self, %arg) = @_;
 
     my $db         = $arg{db}         or die 'DB missing';
+    my $symbol     = $arg{symbol}     or die 'SYMBOL missing';
     my $preset     = $arg{preset}     or die 'PRESET missing';
     my $trade      = $arg{trade}      or die 'TRADE missing';
     my $position   = $arg{position}   or die 'POSITION missing';
@@ -95,10 +91,10 @@ sub check_position {
 
     # check profit target
     my $entry  = $trade->entry_position->price;
-    my $profit = $position->price - $entry;
+    my $profit = ($position->price - $entry) * $symbol->multiplier;
 
     my $percent = $preset->target->profit_target / 100;
-    my $target  = (-$entry) * $percent;
+    my $target  = (-$entry) * $symbol->multiplier * $percent;
 
     if ($profit >= $target) {
         $trade->exit_reason('TAKE_PROFIT');
