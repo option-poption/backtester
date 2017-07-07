@@ -70,7 +70,7 @@ sub stats {
             push @{$data{$key}}, $stat->{calc}->($trade);
         }
         while (my ($key, $prop) = each %{BT::Props->props}) {
-            $trade->properties->{$key} = $prop->{calc}->($trade);
+            $trade->properties->{$key} = BT::Props->calc($key, $trade);
         }
     }
 
@@ -84,6 +84,8 @@ sub stats {
         @data = sort { $a <=> $b } @data;
 
         my $count = scalar @data;
+        next if $count == 0;
+
         my $sum   = 0;
         $sum += $_ foreach (@data);
 
