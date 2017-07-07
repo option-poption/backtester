@@ -4,10 +4,10 @@ use BT::DB;
 
 
 my @data = (
-    ['20+', 20, 'AND field >= ? ORDER BY field ASC'],
-    ['20-', 20, 'AND field <= ? ORDER BY field DESC'],
-    ['20!', 20, 'AND field = ?'],
-    [20, 20, 'ORDER BY ABS(field - ?) ASC'],
+    ['20+', 20, 'AND field >= ? ORDER BY field ASC LIMIT 1'],
+    ['20-', 20, 'AND field <= ? ORDER BY field DESC LIMIT 1'],
+    ['20!', 20, 'AND field = ? LIMIT 1'],
+    [20, 20, 'ORDER BY ABS(field - ?) ASC LIMIT 1'],
 );
 
 my $db = BT::DB->new;
@@ -28,5 +28,5 @@ my ($value, $sql) = $db->_range(
     field => 'date',
     type  => 'date',
 );
-is($sql, 'ORDER BY ABS(DATEDIFF(date, ?)) ASC', 'date');
+is($sql, 'ORDER BY ABS(DATEDIFF(date, ?)) ASC LIMIT 1', 'date');
 
