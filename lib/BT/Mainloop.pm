@@ -2,28 +2,17 @@ package BT::Mainloop;
 
 use Mojo::Base -base;
 
-use Data::Dump qw/pp/;
 use Date::Simple;
-use Module::Find qw/useall/;
-
-use BT::DB;
-use BT::Props;
-use BT::Stats;
-use BT::Trade;
-useall 'BT::Stat';
 
 
-has db => sub {
-    BT::DB->new(
-        symbol => shift->symbol,
-    );
-};
+has 'preset';
 
-has [qw/params preset symbol/];
+has symbol => sub { BT::Symbol->new(id => 1) };
+has db     => sub { BT::DB->new(symbol => shift->symbol) };
+has params => sub { shift->preset->_params('general') };
 
 has start_date => sub { Date::Simple->new('2013-01-01') };
-
-has end_date => sub { Date::Simple->today };
+has end_date   => sub { Date::Simple->today };
 
 has today       => sub { $_[0]->start_date };
 has balance     => sub { $_[0]->params->{account} };
@@ -33,6 +22,7 @@ has stress_test => sub { $_[0]->params->{stress_test} };
 has open     => sub { [] };
 has trades   => sub { [] };
 has equity   => sub { {} };
+
 
 sub run {
     my ($self) = @_;

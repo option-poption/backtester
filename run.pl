@@ -3,78 +3,25 @@
 use Mojo::Base -strict;
 
 use Data::Dump qw/pp/;
-use Module::Find qw/useall/;
 
 use lib 'lib';
-use BT::Mainloop;
-use BT::Symbol;
-useall 'BT::Preset';
+use BT;
 
 
-my %CONFIG = (
-    sp3 => [
-        'ShortPut::Delta',
-        {
-            dte           => '90+',
-            delta         => '3+',
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    sp80 => [
-        'ShortPut::Percent',
-        {
-            dte           => '90+',
-            percent       => 80,
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    cs80 => [
-        'CreditSpread::Percent',
-        {
-            dte           => '90+',
-            percent       => 80,
-            width         => 100,
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    falde => [
-        'Falde604020',
-        {
-            dte           => '60+',
-            delta_percent => 30,
-            round_turn    => 1.23,
-        },
-    ],
-);
-
-my $config = $CONFIG{$ARGV[0] || 'sp3'};
-my $class  = 'BT::Preset::' . $config->[0];
-my $params = $config->[1];
-
-
-my $symbol = BT::Symbol->new(
-    id => 1,
-);
-
-my $preset = $class->new(params => $params);
+my ($config, $debug) = @ARGV;
 
 my $bt = BT::Mainloop->new(
-    symbol => $symbol,
-    params => $preset->_params('general'),
-    preset => $preset,
+    preset => BT::Config->preset($config),
 );
 
 $bt->run;
-pp $bt->trades->[-1]->exit_balance;
+pp $bt->balance;
 
 pp $bt->stats;
 
 pp $bt->exit_reasons;
 
-if ($ARGV[1]) {
+if ($debug) {
     foreach my $trade (@{$bt->trades}) {
         my $props = $trade->properties;
         $props->{entry_date}      .= '';
