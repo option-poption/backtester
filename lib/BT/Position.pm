@@ -53,6 +53,17 @@ sub price {
     return $price / $self->symbol->divider;
 }
 
+sub delta {
+    my ($self) = @_;
+
+    my $delta = 0;
+    foreach my $leg (@{$self->legs}) {
+        $delta += $leg->[0] * $leg->[1]->span_delta;
+    }
+
+    return $delta;
+}
+
 
 1;
 
