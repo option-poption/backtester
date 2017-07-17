@@ -31,6 +31,39 @@ my %CONFIG = (
             multiple      => 25,
         },
     ],
+    rs12 => [
+        'RatioSpread::Delta',
+        {
+            dte           => '90+',
+            delta         => 6,
+            delta2        => 1.5,
+            spread        => '1x2',
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
+    rs13 => [
+        'RatioSpread::Delta',
+        {
+            dte           => '90+',
+            delta         => 6,
+            delta2        => 1,
+            spread        => '1x3',
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
+    rs23 => [
+        'RatioSpread::Delta',
+        {
+            dte           => '90+',
+            delta         => 6,
+            delta2        => 1.5,
+            spread        => '2x3',
+            profit_target => 50,
+            multiple      => 25,
+        },
+    ],
     falde => [
         'Falde604020',
         {
