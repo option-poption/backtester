@@ -167,6 +167,7 @@ sub percent_option {
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $percent    = $arg{percent}    or die 'PERCENT missing';
     my $call_put   = $arg{call_put} || 'P';
+    my $multiple   = $arg{multiple} || 0;
 
     my $underlying = $self->underlying(
         expiration => $expiration,
@@ -184,6 +185,7 @@ sub percent_option {
         expiration => $expiration,
         strike     => $strike,
         call_put   => $call_put,
+        multiple   => $multiple,
     );
 }
 
@@ -194,24 +196,30 @@ sub strike_option {
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $strike     = $arg{strike}     or die 'STRIKE missing';
     my $call_put   = $arg{call_put} || 'P';
+    my $multiple   = $arg{multiple} || 0;
 
     my $sql = "SELECT * FROM options WHERE
-    symbol_id  = ? AND
-    at         = ? AND
-    call_put   = ? AND
-    expiration = ? AND
-    settlement_price > 0
-    ORDER BY ABS(strike - ?) ASC LIMIT 1";
-
-    my $row = $self->dbh->selectrow_hashref(
-        $sql,
-        {},
+        symbol_id  = ? AND
+        at         = ? AND
+        call_put   = ? AND
+        expiration = ? AND
+        settlement_price > 0 ";
+    my @vars = (
         $self->symbol->id,
         $at,
         $call_put,
         $expiration,
-        $strike,
     );
+
+    if ($multiple) {
+        $sql .= "AND MOD(strike, ?) = 0 ";
+        push @vars, $multiple;
+    }
+
+    $sql .= "ORDER BY ABS(strike - ?) ASC LIMIT 1";
+    push @vars, $strike;
+
+    my $row = $self->dbh->selectrow_hashref($sql, {}, @vars);
     unless ($row) {
         warn "Skipping (strike_option): at=$at, cp=$call_put, exp=$expiration, strike=$strike";
         return;
@@ -227,6 +235,7 @@ sub price_option {
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $price      = $arg{price}      or die 'PRICE missing';
     my $call_put   = $arg{call_put} || 'P';
+    my $multiple   = $arg{multiple} || 0;
 
     my ($value, $where) = $self->_range(
         range    => $price,
@@ -234,21 +243,27 @@ sub price_option {
     );
 
     my $sql = "SELECT * FROM options WHERE
-    symbol_id  = ? AND
-    at         = ? AND
-    call_put   = ? AND
-    expiration = ? AND
-    settlement_price > 0 $where";
-
-    my $row = $self->dbh->selectrow_hashref(
-        $sql,
-        {},
+        symbol_id  = ? AND
+        at         = ? AND
+        call_put   = ? AND
+        expiration = ? AND
+        settlement_price > 0 ";
+    my @vars = (
         $self->symbol->id,
         $at,
         $call_put,
         $expiration,
-        $value * 100, # TODO use symbol->divider
     );
+
+    if ($multiple) {
+        $sql .= "AND MOD(strike, ?) = 0 ";
+        push @vars, $multiple;
+    }
+
+    $sql .= $where;
+    push @vars, $value * 100; # TODO use symbol->divider
+
+    my $row = $self->dbh->selectrow_hashref($sql, {}, @vars);
     unless ($row) {
         warn "Skipping (price_option): at=$at, cp=$call_put, exp=$expiration";
         return;
