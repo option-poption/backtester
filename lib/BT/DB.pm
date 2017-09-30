@@ -220,6 +220,43 @@ sub strike_option {
     return BT::Option->new($row);
 }
 
+sub price_option {
+    my ($self, %arg) = @_;
+
+    my $at         = $arg{at}         or die 'AT missing';
+    my $expiration = $arg{expiration} or die 'EXPIRATION missing';
+    my $price      = $arg{price}      or die 'PRICE missing';
+    my $call_put   = $arg{call_put} || 'P';
+
+    my ($value, $where) = $self->_range(
+        range    => $price,
+        field    => 'settlement_price',
+    );
+
+    my $sql = "SELECT * FROM options WHERE
+    symbol_id  = ? AND
+    at         = ? AND
+    call_put   = ? AND
+    expiration = ? AND
+    settlement_price > 0 $where";
+
+    my $row = $self->dbh->selectrow_hashref(
+        $sql,
+        {},
+        $self->symbol->id,
+        $at,
+        $call_put,
+        $expiration,
+        $value * 100, # TODO use symbol->divider
+    );
+    unless ($row) {
+        warn "Skipping (price_option): at=$at, cp=$call_put, exp=$expiration";
+        return;
+    }
+
+    return BT::Option->new($row);
+}
+
 sub position_at {
     my ($self, $position, $at) = @_;
 

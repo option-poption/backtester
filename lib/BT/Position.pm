@@ -2,6 +2,7 @@ package BT::Position;
 
 use Mojo::Base -base;
 
+use overload '""' => 'to_string';
 
 has legs => sub { [] };
 has 'symbol';
@@ -64,6 +65,15 @@ sub delta {
     return $delta;
 }
 
+sub to_string {
+    my ($self) = @_;
+
+    my $out = sprintf("Price: %s, Margin: %.0f\n", $self->price, $self->margin);
+    foreach my $leg (@{$self->legs}) {
+        $out .= sprintf("%3d %s\n", $leg->[0], $leg->[1]);
+    }
+
+    return $out;
+}
 
 1;
-

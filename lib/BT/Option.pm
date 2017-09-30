@@ -2,6 +2,7 @@ package BT::Option;
 
 use Mojo::Base -base;
 
+use overload '""' => 'to_string';
 use Date::Simple;
 
 
@@ -29,5 +30,12 @@ sub dte {
 sub format_strike { sprintf('%.0f', shift->strike) }
 sub format_delta  { sprintf('%.2f', shift->span_delta * 100) }
 sub format_iv     { sprintf('%.1f', shift->implied_volatility * 100) }
+sub format_price  { sprintf('%.2f', shift->settlement_price / 100) } # TODO use symbol->divider
+
+sub to_string {
+    my ($self) = @_;
+
+    return sprintf("%s%s %s %5s", $self->format_strike, $self->call_put, $self->expiration, $self->format_price);
+}
 
 1;
