@@ -56,6 +56,16 @@ sub ProfitTarget {
     };
 }
 
+sub TimeExit {
+    return {
+        name        => 'time_exit',
+        label       => 'Time Exit',
+        default     => shift || 7,
+        type        => 'int',
+        description => 'Exit if DTE falls below this',
+    };
+}
+
 # general
 
 sub general_params {
@@ -92,4 +102,3 @@ sub general_params {
 }
 
 1;
-

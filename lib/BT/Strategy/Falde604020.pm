@@ -38,7 +38,7 @@ sub entry {
     $position->add(-2, $puts[1]);
     $position->add(1, $puts[2]);
 
-    return $position;    
+    return $position;
 }
 
 sub check_position {
@@ -50,7 +50,7 @@ sub check_position {
     my $position   = $arg{position}   or die 'POSITION missing';
     my $underlying = $arg{underlying} or die 'UNDERLYING missing';
 
-    if ($position->first_option->dte <= 30) {
+    if ($position->first_option->dte <= $preset->target->time_exit) {
         $trade->exit_reason('TIME_EXIT');
         $trade->exit_position($position);
         $trade->exit_underlying($underlying);

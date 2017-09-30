@@ -2,6 +2,7 @@ package BT::DB;
 
 use Mojo::Base -base;
 
+use Data::Dump qw/pp/;
 use DBI;
 
 use BT::Option;
@@ -85,6 +86,12 @@ sub option {
         return;
     }
 
+    # fix settlement price
+    if ($row->{settlement_price} == 9_999_999) {
+        warn "Settlement Price zero: at=$at";
+        $row->{settlement_price} = 0;
+    }
+
     return BT::Option->new($row);
 }
 
@@ -120,6 +127,7 @@ sub delta_option {
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $delta      = $arg{delta}      or die 'DELTA missing';
+    my $call_put   = $arg{call_put} || 'P';
     my $multiple   = $arg{multiple} || 0;
 
     my ($value, $where) = $self->_range(
@@ -131,7 +139,7 @@ sub delta_option {
     my $sql = "SELECT * FROM options WHERE
     symbol_id  = ? AND
     at         = ? AND
-    call_put   = 'P' AND
+    call_put   = ? AND
     expiration = ? AND
     settlement_price > 0 $where";
 
@@ -140,11 +148,12 @@ sub delta_option {
         {},
         $self->symbol->id,
         $at,
+        $call_put,
         $expiration,
         $value / 100,
     );
     unless ($row) {
-        warn "Skipping (delta_option): at=$at, exp=$expiration";
+        warn "Skipping (delta_option): at=$at, cp=$call_put, exp=$expiration";
         return;
     }
 
@@ -157,13 +166,14 @@ sub percent_option {
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $percent    = $arg{percent}    or die 'PERCENT missing';
+    my $call_put   = $arg{call_put} || 'P';
 
     my $underlying = $self->underlying(
         expiration => $expiration,
         at         => $at,
     );
     unless ($underlying) {
-        warn "Skipping (percent_option): at=$at, exp=$expiration - no underlying";
+        warn "Skipping (percent_option): at=$at, cp=$call_put, exp=$expiration - no underlying";
         return;
     }
 
@@ -173,6 +183,7 @@ sub percent_option {
         at         => $at,
         expiration => $expiration,
         strike     => $strike,
+        call_put   => $call_put,
     );
 }
 
@@ -182,11 +193,12 @@ sub strike_option {
     my $at         = $arg{at}         or die 'AT missing';
     my $expiration = $arg{expiration} or die 'EXPIRATION missing';
     my $strike     = $arg{strike}     or die 'STRIKE missing';
+    my $call_put   = $arg{call_put} || 'P';
 
     my $sql = "SELECT * FROM options WHERE
     symbol_id  = ? AND
     at         = ? AND
-    call_put   = 'P' AND
+    call_put   = ? AND
     expiration = ? AND
     settlement_price > 0
     ORDER BY ABS(strike - ?) ASC LIMIT 1";
@@ -196,11 +208,12 @@ sub strike_option {
         {},
         $self->symbol->id,
         $at,
+        $call_put,
         $expiration,
         $strike,
     );
     unless ($row) {
-        warn "Skipping (strike_option): at=$at, exp=$expiration, strike=$strike";
+        warn "Skipping (strike_option): at=$at, cp=$call_put, exp=$expiration, strike=$strike";
         return;
     }
 

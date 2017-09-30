@@ -2,82 +2,15 @@ package BT::Config;
 
 use Mojo::Base -strict;
 
-my %CONFIG = (
-    sp3 => [
-        'ShortPut::Delta',
-        {
-            dte           => '90+',
-            delta         => '3+',
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    sp80 => [
-        'ShortPut::Percent',
-        {
-            dte           => '90+',
-            percent       => 80,
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    cs80 => [
-        'CreditSpread::Percent',
-        {
-            dte           => '90+',
-            percent       => 80,
-            width         => 100,
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    rs12 => [
-        'RatioSpread::Delta',
-        {
-            dte           => '90+',
-            delta         => 6,
-            delta2        => 1.5,
-            spread        => '1x2',
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    rs13 => [
-        'RatioSpread::Delta',
-        {
-            dte           => '90+',
-            delta         => 6,
-            delta2        => 1,
-            spread        => '1x3',
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    rs23 => [
-        'RatioSpread::Delta',
-        {
-            dte           => '90+',
-            delta         => 6,
-            delta2        => 1.5,
-            spread        => '2x3',
-            profit_target => 50,
-            multiple      => 25,
-        },
-    ],
-    falde => [
-        'Falde604020',
-        {
-            dte           => '60+',
-            delta_percent => 30,
-            round_turn    => 1.23,
-        },
-    ],
-);
+use Mojo::File;
+use Mojo::JSON;
+
+my $CONFIG = Mojo::JSON::decode_json(Mojo::File->new('config.json')->slurp);
 
 sub preset {
     my ($class, $name) = @_;
 
-    my $config = $CONFIG{$name || 'sp3'};
+    my $config = $CONFIG->{$name || 'sp3'};
     my $preset = 'BT::Preset::' . $config->[0];
     my $params = $config->[1];
 

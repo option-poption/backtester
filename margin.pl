@@ -37,9 +37,15 @@ while ($at <= $end_date) {
     my $pos = $db->position_at($position, $at);
     next unless $pos;
 
+    my $und = $db->underlying(
+        at       => $at,
+        position => $position,
+    );
+
     printf(
-        "%s: Price = %.2f, Margin = %.2f\n",
+        "%s: Underlying = %.2f, Price = %.2f, Margin = %.2f\n",
         $at,
+        $und,
         $pos->price,
         $pos->margin,
     );

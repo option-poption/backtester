@@ -1,17 +1,23 @@
-package BT::Target::Percent;
+package BT::Target::Fixed;
 
 use Mojo::Base 'BT::Target';
 
 use BT::Params;
 
-has [qw/profit_target time_exit/];
+has [qw/time_exit profit_target/];
 
 sub params {
     return [
-        BT::Params::ProfitTarget,
+        BT::Params::TimeExit(7),
+        {
+            name        => 'profit_target',
+            label       => 'Profit Target',
+            default     => 500,
+            type        => 'float',
+            description => 'Profit Target (in Dollars) per Lot',
+        },
     ];
 }
-
 
 sub check_position {
     my ($self, %arg) = @_;
@@ -23,14 +29,11 @@ sub check_position {
     my $position   = $arg{position}   or die 'POSITION missing';
     my $underlying = $arg{underlying} or die 'UNDERLYING missing';
 
-    # Profit Target (in percent)
+    # Profit Target
     my $entry  = $trade->entry_position->price;
     my $profit = ($position->price - $entry) * $symbol->multiplier;
 
-    my $percent = $self->profit_target / 100;
-    my $target  = (-$entry) * $symbol->multiplier * $percent;
-
-    if ($profit >= $target) {
+    if ($profit >= $self->profit_target) {
         $trade->exit_reason('TAKE_PROFIT');
         $trade->exit_position($position);
         $trade->exit_underlying($underlying);

@@ -2,17 +2,14 @@ package BT::Target::Falde604020;
 
 use Mojo::Base 'BT::Target';
 
+use BT::Params;
+
+has 'time_exit';
+
 sub params {
     return [
-        {
-            name        => 'time_exit',
-            label       => 'Time Exit',
-            default     => 30,
-            type        => 'int',
-            description => 'Exit if DTE falls below this',
-        },
+        BT::Params::TimeExit(30),
     ];
 }
 
 1;
-

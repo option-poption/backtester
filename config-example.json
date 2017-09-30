@@ -1,0 +1,30 @@
+{
+  "sp3": [
+    "ShortPut::Delta",
+    {
+      "dte": "90+",
+      "delta": "3+",
+      "profit_target": 50,
+      "multiple": 25
+    }
+  ],
+  "sp80": [
+    "ShortPut::Percent",
+    {
+      "dte": "90+",
+      "percent": 80,
+      "profit_target": 50,
+      "multiple": 25
+    }
+  ],
+  "cs80": [
+    "CreditSpread::Percent",
+    {
+      "dte": "90+",
+      "percent": 80,
+      "width": 100,
+      "profit_target": 50,
+      "multiple": 25
+    }
+  ]
+}
