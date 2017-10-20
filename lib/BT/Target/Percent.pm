@@ -4,11 +4,18 @@ use Mojo::Base 'BT::Target';
 
 use BT::Params;
 
-has [qw/profit_target time_exit/];
+has [qw/time_exit profit_target/];
 
 sub params {
     return [
-        BT::Params::ProfitTarget,
+        BT::Params::TimeExit(7),
+        {
+            name        => 'profit_target',
+            label       => 'Target %',
+            default     => 50,
+            type        => 'float',
+            description => 'Profit Target in %',
+        }
     ];
 }
 

@@ -46,16 +46,6 @@ sub Width {
 
 # target
 
-sub ProfitTarget {
-    return {
-        name        => 'profit_target',
-        label       => 'Target',
-        default     => shift || 50,
-        type        => 'float',
-        description => 'Profit Target in %',
-    };
-}
-
 sub TimeExit {
     return {
         name        => 'time_exit',

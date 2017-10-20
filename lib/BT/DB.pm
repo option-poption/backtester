@@ -88,7 +88,7 @@ sub option {
 
     # fix settlement price
     if ($row->{settlement_price} == 9_999_999) {
-        warn "Settlement Price zero: at=$at";
+        warn "Settlement Price zero: at=$at" unless $ENV{OP_BT_ZERO_OK};
         $row->{settlement_price} = 0;
     }
 

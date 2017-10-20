@@ -65,6 +65,31 @@ sub delta {
     return $delta;
 }
 
+sub expire {
+    my ($self, $today) = @_;
+
+    my $index   = 0;
+    my $amount  = 0;
+    my $expired = 0;
+
+    while ($index < @{$self->legs}) {
+        my $leg = $self->legs->[$index];
+        if ($today ge $leg->[1]->expiration) {
+            $expired++;
+            $amount += $leg->[0] * $leg->[1]->settlement_price;
+            splice(@{$self->legs}, $index, 1);
+        } else {
+            $index++;
+        }
+    }
+
+    if ($expired) {
+        return $amount;
+    } else {
+        return undef;
+    }
+}
+
 sub to_string {
     my ($self) = @_;
 

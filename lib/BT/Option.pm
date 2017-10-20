@@ -35,7 +35,14 @@ sub format_price  { sprintf('%.2f', shift->settlement_price / 100) } # TODO use 
 sub to_string {
     my ($self) = @_;
 
-    return sprintf("%s%s %s %5s", $self->format_strike, $self->call_put, $self->expiration, $self->format_price);
+    return sprintf(
+        "%s%s %s (%3d) %5s",
+        $self->format_strike,
+        $self->call_put,
+        $self->expiration,
+        $self->dte,
+        $self->format_price,
+    );
 }
 
 1;
