@@ -255,11 +255,6 @@ sub price_option {
         $expiration,
     );
 
-    if ($multiple) {
-        $sql .= "AND MOD(strike, ?) = 0 ";
-        push @vars, $multiple;
-    }
-
     $sql .= $where;
     push @vars, $value * 100; # TODO use symbol->divider
 
@@ -296,9 +291,10 @@ sub position_at {
 sub _range {
     my ($self, %arg) = @_;
 
-    my $range = $arg{range} or die 'RANGE missing';
-    my $field = $arg{field} or die 'FIELD missing';
-    my $type  = $arg{type} // '';
+    my $range    = $arg{range} or die 'RANGE missing';
+    my $field    = $arg{field} or die 'FIELD missing';
+    my $multiple = $arg{multiple} || 0;
+    my $type     = $arg{type} // '';
 
     unless ($range =~ /^([0-9.]+)([-+!]?)$/) {
         die "RANGE '$range' has unknown format";
@@ -309,16 +305,22 @@ sub _range {
 
     my $sql = '';
     if ($mode eq '+') {
-        $sql = "AND $field >= ? ORDER BY $field ASC";
+        $sql = "AND $field >= ?";
+        $sql .= " AND MOD(strike, $multiple) = 0" if $multiple;
+        $sql .= " ORDER BY $field ASC";
     } elsif ($mode eq '-') {
-        $sql = "AND $field <= ? ORDER BY $field DESC";
+        $sql = "AND $field <= ?";
+        $sql .= " AND MOD(strike, $multiple) = 0" if $multiple;
+        $sql .= " ORDER BY $field DESC";
     } elsif ($mode eq '!') {
         $sql = "AND $field = ?";
+        $sql .= " AND MOD(strike, $multiple) = 0" if $multiple;
     } else {
+        $sql = "AND MOD(strike, $multiple) = 0 " if $multiple;
         if ($type eq 'date') {
-            $sql = "ORDER BY ABS(DATEDIFF($field, ?)) ASC";
+            $sql .= "ORDER BY ABS(DATEDIFF($field, ?)) ASC";
         } else {
-            $sql = "ORDER BY ABS($field - ?) ASC";
+            $sql .= "ORDER BY ABS($field - ?) ASC";
         }
     }
 
