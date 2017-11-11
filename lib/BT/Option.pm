@@ -6,16 +6,15 @@ use overload '""' => 'to_string';
 use Date::Simple;
 
 
-has [qw/symbol_id at expiration call_put strike settlement_price delta span_delta implied_volatility futures_contract_month/];
-has [qw/value1 value2 value3 value4 value5 value6 value7 value8 value9 value10 value11 value12 value13 value14 value15 value16/];
+has [qw/symbol_id at expiration call_put strike settlement_price delta span_delta implied_volatility futures_contract_month values/];
 
-sub values {
-    my ($self) = @_;
-
-    return [
-        $self->value1, $self->value2, $self->value3, $self->value4, $self->value5, $self->value6, $self->value7, $self->value8,
-        $self->value9, $self->value10, $self->value11, $self->value12, $self->value13, $self->value14, $self->value15, $self->value16,
+sub new {
+    my ($class, $row) = @_;
+    $row->{values} = [
+        $row->{value1}, $row->{value2}, $row->{value3}, $row->{value4}, $row->{value5}, $row->{value6}, $row->{value7}, $row->{value8},
+        $row->{value9}, $row->{value10}, $row->{value11}, $row->{value12}, $row->{value13}, $row->{value14}, $row->{value15}, $row->{value16},
     ];
+    $class->SUPER::new($row);
 }
 
 sub dte {
