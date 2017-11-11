@@ -34,11 +34,13 @@ my $half_turn = 2.06;
 my $symbol = BT::Symbol->new(id => 1);
 my $db     = BT::DB->new(symbol => $symbol);
 
+$db->memoize_option;
+
 my @positions = ();
 my $total_pos = BT::Position->new(symbol => $symbol);
 
 my $dates    = $db->valid_dates;
-my $today    = Date::Simple->new('2014-01-01');
+my $today    = Date::Simple->new('2015-01-01');
 my $end_date = Date::Simple->new('2015-09-01');
 
 my $limit = undef;

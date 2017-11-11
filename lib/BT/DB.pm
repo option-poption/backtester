@@ -4,6 +4,7 @@ use Mojo::Base -base;
 
 use Data::Dump qw/pp/;
 use DBI;
+use Memoize;
 
 use BT::Option;
 
@@ -18,6 +19,10 @@ has dbh => sub {
         {RaiseError => 1},
     );
 };
+
+sub memoize_option {
+    memoize('option');
+}
 
 sub valid_dates {
     my ($self) = @_;
